@@ -4,6 +4,6 @@
   become: true
   tasks:
 
-  - name: install OpenSCAP package
-    dnf:
-      name: OpenSCAP
+  - name: install openscap package
+    yum:
+      name: openscap
