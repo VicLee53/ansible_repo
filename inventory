@@ -1,2 +1,4 @@
+[webserver]
 10.0.2.4
+[dbserver]
 10.0.2.5
