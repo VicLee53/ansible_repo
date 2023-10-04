@@ -1,0 +1,162 @@
+---
+
+- hosts: all
+  gather_facts: yes
+  become: true
+  tasks:
+
+  - name: "1.1.1 Check if cramfs filesystem is disable/exist" 
+    stat:
+      path: /etc/modprobe.d/cramfs.conf
+    register: cramfs_filesystem
+
+  - name: "1.1.1 Report if cramfs filesystem not exist" 
+    debug:
+      msg: "cramfs filesystem does not exist"
+    when: not cramfs_filesystem.stat.exists
+
+  - name: "1.1.1.1 Check if squashfs filesystem is disable/exist" 
+    stat:
+      path: /etc/modprobe.d/squashfs.conf
+    register: squashfs_filesystem
+
+  - name: "1.1.1.1 Report if squashfs filesystem not exist" 
+    debug:
+      msg: "squashfs filesystem does not exist"
+    when: not squashfs_filesystem.stat.exists
+
+  - name: "1.1.1.2 Check if udf filesystem is disable/exist" 
+    stat:
+      path: /etc/modprobe.d/udf.conf
+    register: udf_filesystem
+
+  - name: "1.1.1.2 Report if udf filesystem not exist" 
+    debug:
+      msg: "udf filesystem does not exist"
+    when: not udf_filesystem.stat.exists
+
+  - name: "1.1.2 Ensure /tmp is configured (Scored)"
+    stat:
+      path: /lib/systemd/system/tmp.mount
+    register: tmp_mount
+
+  - name: "1.1.2.1 Ensure /tmp is configured in systemd"
+    debug:
+      msg: "tmp.mount file exist"
+    when: tmp_mount.stat.exists    
+    
+  - name: "1.1.2.1 Ensure /tmp is configured in fstab"
+    lineinfile:
+      path: /etc/fstab
+      line: tmpfs /tmp tmpfs defaults,rw,nosuid,noexec,relatime 0 0 
+      state: present
+    check_mode: yes    
+    register: tmpfs
+    failed_when: tmpfs is failed  
+       
+  - name: "1.1.2.2 check if (novdev)option is already set"
+    become: yes
+    become_user: root
+    register: nodev
+    shell: "grep -i 'nodev' /lib/systemd/system/tmp.mount"
+          
+  - name: "1.1.2.2 nodev-option has been set"
+    debug:
+      msg: "novdev option has been set in tmp.mount"
+    when: nodev is changed    
+  
+   
+  - name: "1.1.2.2 Ensure nodev option set for /tmp in fstab"
+    block:
+      - name: "Task 1.1.2.2-nodev option in fstab"
+        ansible.builtin.debug:
+          msg: "Execute task-nodev option"
+
+      - name: "Check for nodev-option"
+        ansible.builtin.shell: "grep -i 'nodev' /etc/fstab"
+
+      - name: "Task 1.1.2.2-nodev option"  
+        ansible.builtin.debug: 
+          msg: "Execute below if task 1 failed"
+        become: yes
+        become_user: root
+            
+    rescue:
+      - name: "if the first task failed-grep nodev failed"
+        ansible.builtin.debug:
+          msg: "error as grep could not find 'nodev' in fstab"   
+
+      - name: "Force a failure in middle of recovery"
+        ansible.builtin.command: /bin/false 
+
+      - name: "All is good if the first task failed"
+        ansible.builtin.debug:     
+          msg: "This handler runs even on error" 
+    always:
+      - name: "Always do this"     
+        ansible.builtin.debug:
+          msg: "This always executes"   
+        
+      - name: "1.1.2.3 check if (noexec)option is already set"
+        block:
+          - name: "Task 1.1.2.3-noexec option in tmp.mount"
+            ansible.builtin.debug:
+              msg: "Execute task-noexec option"
+
+          - name: "1.1.2.3-Check for noexec-option"
+            ansible.builtin.shell: "grep -i 'noexec' /lib/systemd/system/tmp.mount"     
+
+          - name: "1.1.2.3-noexec option"
+            ansible.builtin.debug:
+              msg: "Execute below if task 1 failed"
+            become: yes
+            become_user: root    
+
+        rescue:
+          - name: "1,1,2,3-if the first task failed-grep noexec failed"
+            ansible.builtin.debug:
+              msg: "error as grep could not find 'noexec' in tmp.mount"
+
+          - name: "1,1,2,3-Force a failure in middle of recovery"
+            ansible.builtin.command: /bin/false
+
+          - name: "1.1.2.3-All is good if the first task failed"
+            ansible.builtin.debug:
+              msg: "This handler runs even on error"
+        always:
+          - name: "1.1.2.3-Always do this"
+            ansible.builtin.debug:
+              msg: "This always executes"
+
+          - name: "1.1.2.3 Ensure noexec option set for /tmp in fstab"
+            block:
+              - name: "Task 1.1.2.3-noexec option in fstab"
+                ansible.builtin.debug:
+                  msg: "Execute task-noexec option"
+         
+              - name: "1.1.2.3-Check for noexec-option in fstab"
+                ansible.builtin.shell: "grep -i 'noexec' /etc/fstab"
+
+              - name: "1.1.2.3-noexec option"
+                ansible.builtin.debug:
+                  msg: "Execute below if task 1 failed"
+                become: yes
+                become_user: root      
+ 
+            rescue:
+              - name: "1,1,2,3-if the first task failed-grep noexec failed in fstab"
+                ansible.builtin.debug:
+                  msg: "error as grep could not find 'noexec' in fstab"
+
+              - name: "1,1,2,3-Force a failure in middle of recovery"
+                ansible.builtin.command: /bin/false
+
+              - name: "1.1.2.3-All is good if the first task failed"
+                ansible.builtin.debug:
+                  msg: "This handler runs even on error"
+            always:
+              - name: "1.1.2.3-Always do this"
+                ansible.builtin.debug:
+                  msg: "This always executes"                
+        
+      
