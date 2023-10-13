@@ -1,0 +1,19 @@
+---
+
+  - name: "Playbook_Output_Failed"
+    hosts: "all"
+    tasks:
+      - name: "Get failed results"
+        set_fact:
+          failed: "{{ lookup('ara_api', '/api/v1/results?status=failed') }}"
+
+      - name: " Print task data from failed results"
+        vars:
+          task_id: "{{ item_task | string }}"
+          task: "{{ lookup('ara_api', '/api/v1/tasks/' + task_id ) }}"
+          host_id: "{{ item_host | string }}"
+          host: "{{ lookup('ara_api', '/api/v1/hosts/' + host_id ) }}"  
+        debug:
+          msg: "{{ host.name }} failed | {{ task.name }} ({{ task.path }}:{{ task.lineno }})"
+        loop: "{{ failed.results }}"
+
