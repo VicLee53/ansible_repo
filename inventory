@@ -1,4 +1,10 @@
-[webserver]
-10.0.2.4
-[dbserver]
-10.0.2.5
+[python]
+172.18.8.147
+172.18.8.149
+
+[python:vars]
+ansible_user=root
+ansible_ssh_public_key_file=~/.ssh/id_ed25519.pub
+
+#10.0.2.4
+#10.0.2.5
